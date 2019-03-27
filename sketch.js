@@ -3,24 +3,37 @@ let tri;
 let triArray = [];
 let numPoints = 10;
 
+let colorA;
+let colorB;
+let interp;
+
 function setup() {
-  createCanvas(400, 400);
+  createCanvas(600, 600);
 
   initializeProtoEdge();
   tri = new Triangle(50, 50, 0);
 
   createTriangleArray();
+
+  colorA = color(79, 5, 252);
+  colorB = color(5, 186, 252);
+  interp = 0;
 }
 
 function draw() {
   background(220);
 
   drawEdge(protoEdge);
+
+  fill(lerpColor(colorA,colorB,sin(interp)));
+  stroke(255,255,255);
+
   tri.draw(true);
 
   for (let t of triArray) {
     t.draw();
   }
+  interp = interp + 0.002;
 }
 
 function mousePressed() {
@@ -44,30 +57,37 @@ function mouseReleased() {
 }
 
 function createTriangleArray() {
-  let x0 = 50;
-  let y0 = 200;
+  let x0 = 150;
+  let y0 = 300;
+
+  let s = 100;
+  let h = s * sqrt(3) / 2;
+
   // row 1
   triArray.push(new Triangle(x0,y0,0));
-  triArray.push(new Triangle(x0+100,y0,PI/3));
-  triArray.push(new Triangle(x0+200,y0,2*PI/3));
-  triArray.push(new Triangle(x0+300,y0,2*PI/3));
+  triArray.push(new Triangle(x0+s,y0,PI/3));
+  triArray.push(new Triangle(x0+2*s,y0,2*PI/3));
+  triArray.push(new Triangle(x0+3*s,y0,2*PI/3));
   // row 1.5
-  triArray.push(new Triangle(x0+50,y0+50*sqrt(3),0));
-  triArray.push(new Triangle(x0+250,y0+50*sqrt(3),PI));
+  triArray.push(new Triangle(x0+s*0.5,y0+h,0));
+  triArray.push(new Triangle(x0+s*2.5,y0+h,PI));
   // row 2
-  triArray.push(new Triangle(x0,y0+100*sqrt(3),-PI/3));
-  triArray.push(new Triangle(x0+100,y0+100*sqrt(3),-PI/3));
-  triArray.push(new Triangle(x0+200,y0+100*sqrt(3),-2*PI/3));
-  triArray.push(new Triangle(x0+300,y0+100*sqrt(3),PI));
+  triArray.push(new Triangle(x0,y0+2*h,-PI/3));
+  triArray.push(new Triangle(x0+s,y0+2*h,-PI/3));
+  triArray.push(new Triangle(x0+s*2,y0+2*h,-2*PI/3));
+  triArray.push(new Triangle(x0+s*3,y0+2*h,PI));
 }
 
 function Triangle(x, y, theta) {
 
   Shape.call(this, x, y, theta);
 
+  let s = 100;
+  let h = s * sqrt(3) / 2;
+
   edge1 = new edge(0, 0, 0, false);
-  edge2 = new edge(50, 50 * sqrt(3), -PI / 3, true);
-  edge3 = new edge(50, 50 * sqrt(3), -2 * PI / 3, false);
+  edge2 = new edge(s/2, h, -PI / 3, true);
+  edge3 = new edge(s/2, h, -2 * PI / 3, false);
 
   this.edges = [edge1, edge2, edge3];
 }
@@ -156,12 +176,10 @@ function Shape(x, y, theta) {
   };
 
   this.draw = function(drawEditPoints=false) {
-    fill(240, 0, 0);
     push();
     translate(this.x, this.y);
     rotate(this.theta);
 
-    stroke(40);
     beginShape();
     for (let e of this.edges) {
       for (let p of e.points) {
@@ -192,7 +210,7 @@ function Shape(x, y, theta) {
           } else {
             fill(40, 40, 40, 100);
           }
-          ellipse(p.x, p.y, 10);
+          ellipse(p.x, p.y, 6);
         }
     }
     }
