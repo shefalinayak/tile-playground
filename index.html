@@ -1,24 +1,14 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <style>
-    html, body {
-      height: 100%;
-    }
-
-    body {
-      margin: 0;
-      display: flex;
-
-      /* This centers our sketch horizontally. */
-      justify-content: center;
-
-      /* This centers our sketch vertically. */
-      align-items: center;
-    }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.js"></script>
-    <script src="sketch.js"></script>
-  </head>
-  <body>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <!-- Load the Paper.js library -->
+  <script type="text/javascript" src="paperjs/dist/paper-full.min.js"></script>
+  <!-- Load external PaperScript and associate it with myCanvas -->
+  <script type="text/paperscript" src="paper-sketch.js" canvas="myCanvas">
+  </script>
+</head>
+<body>
+	<canvas id="myCanvas" resize="false"></canvas>
+</body>
 </html>
