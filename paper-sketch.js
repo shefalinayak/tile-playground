@@ -38,19 +38,44 @@ function createProtoTriangle(protoEdge) {
   return triangle;
 }
 
+var triangles = [];
+
 var sl = 100;
 var origin = new Point(0,0);
 var endpt = new Point(sl,0);
 
 var protoEdge = createProtoEdge(origin,endpt);
 var protoTriangle = createProtoTriangle(protoEdge);
-
-protoTriangle.selected = true;
+trianglePattern();
 
 protoTriangle.translate(50,100);
 protoEdge.translate(50,50);
 
+protoTriangle.selected = true;
+
+function addTriangle(x,y,theta) {
+  var tri = protoTriangle.clone();
+  tri.position = new Point(x,y);
+  tri.rotate(10);
+  tri.selected = false;
+  triangles.push(tri);
+}
+
+function trianglePattern() {
+  addTriangle(300,300,0);
+  addTriangle(400,400,60);
+}
+
+function stampTriangles() {
+  var numTriangles = triangles.length;
+  for (var i = 0; i < numTriangles; i++) {
+    triangles.pop().remove();
+  }
+  trianglePattern();
+}
+
 var selectedSegment;
+var segmentAngle;
 function onMouseDown(event) {
   selectedSegment = null;
   var hitResult = project.hitTest(event.point, hitOptions);
@@ -69,6 +94,7 @@ function onMouseDown(event) {
     if (protoIndex > 0 && protoIndex < numSegments) {
       selectedSegment = protoEdge.segments[protoIndex];
     }
+    segmentAngle = -60 * selectedSide;
 
     console.log('t',triangleIndex,' s',selectedSide,' p',protoIndex);
   }
@@ -76,11 +102,13 @@ function onMouseDown(event) {
 
 function onMouseDrag(event) {
   if (selectedSegment) {
-    selectedSegment.point += event.delta;
+    selectedSegment.point += event.delta.rotate(segmentAngle * -1);
     protoEdge.translate(-50,-50);
     protoTriangle.remove();
     protoTriangle = createProtoTriangle(protoEdge);
     protoTriangle.selected = true;
+
+    stampTriangles();
 
     protoEdge.translate(50,50);
     protoTriangle.translate(50,100);
