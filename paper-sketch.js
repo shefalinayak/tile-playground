@@ -56,14 +56,29 @@ protoTriangle.selected = true;
 function addTriangle(x,y,theta) {
   var tri = protoTriangle.clone();
   tri.position = new Point(x,y);
-  tri.rotate(10);
+  tri.rotate(theta);
   tri.selected = false;
   triangles.push(tri);
 }
 
 function trianglePattern() {
-  addTriangle(300,300,0);
-  addTriangle(400,400,60);
+  var x0 = 150;
+  var y0 = 300;
+  var s = 100;
+  var h = s * Math.sqrt(3) / 2;
+  // row 1
+  addTriangle(x0,y0,0);
+  addTriangle(x0+s,y0,60);
+  addTriangle(x0+2*s,y0,120);
+  addTriangle(x0+3*s,y0,120);
+  // row 1.5
+  addTriangle(x0+s*0.5,y0+h,0);
+  addTriangle(x0+s*2.5,y0+h,180);
+  // row 2
+  addTriangle(x0,y0+2*h,-60);
+  addTriangle(x0+s,y0+2*h,-60);
+  addTriangle(x0+s*2,y0+2*h,-120);
+  addTriangle(x0+s*3,y0+2*h,180);
 }
 
 function stampTriangles() {
