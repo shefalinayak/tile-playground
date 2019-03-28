@@ -127,5 +127,9 @@ function onMouseDrag(event) {
 
     protoEdge.translate(50,50);
     protoTriangle.translate(50,100);
+
+    if (protoTriangle.getCrossings(protoTriangle).length > 0) {
+      protoTriangle.fillColor = 'red';
+    }
   }
 }
