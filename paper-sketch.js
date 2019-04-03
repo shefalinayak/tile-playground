@@ -6,6 +6,10 @@ var hitOptions = {
 };
 
 var dotRadius = hitOptions.tolerance / 2;
+var s = 100;
+var h = s * Math.sqrt(3) / 2;
+var origin = new Point(0,0);
+var endpt = new Point(s,0);
 
 function createProtoEdge(startpt,endpt) {
   var protoEdge = new Path();
@@ -20,20 +24,30 @@ function createProtoEdge(startpt,endpt) {
   return protoEdge;
 }
 
+function Edge(proto,delta,theta,reversed) {
+	this.proto = proto;
+	this.delta = delta;
+	this.theta = theta;
+	this.reversed = reversed;
+
+	this.getPath = function() {
+		var edgePath = this.proto.clone();
+		edgePath.rotate(this.theta);
+		edgePath.translate(this.delta);
+		if (this.reversed) edgePath.reverse();
+		edgePath.remove();
+		return edgePath;
+	}
+}
+
 function createProtoTriangle(protoEdge) {
-  var e1 = protoEdge.clone();
-  var e2 = e1.clone();
-  e2.rotate(-60,endpt).reverse();
-  var e3 = e2.clone();
-  e3.rotate(-60).reverse();
+	var e1 = new Edge(protoEdge,new Point(0,0),0,false);
+	var e2 = new Edge(protoEdge,new Point(s/2,h),-60,true);
+	var e3 = new Edge(protoEdge,new Point(s/2,h),-120,false);
 
-  var triangle = e1;
-  triangle.join(e2);
-  triangle.join(e3);
-  triangle.closed = true;
+	var edges = [e1,e2,e3];
 
-  triangle.removeSegment(9);
-  triangle.removeSegment(12);
+  var triangle = createShapeFromEdges(edges);
 
   triangle.fillColor = 'paleturquoise';
 	triangle.strokeColor = 'darkturquoise';
@@ -41,13 +55,41 @@ function createProtoTriangle(protoEdge) {
   return triangle;
 }
 
-function drawDots(myPath) {
+function createShapeFromEdges(edges) {
+	var myShape = new Path();
+	var ptData = [];
+	for (var i = 0; i < edges.length; i++) {
+		var edge = edges[i];
+		var edgeSegments = edge.getPath().segments;
+		var numSegments = edgeSegments.length;
+		for (var j = 0; j < numSegments-1; j++) {
+			var seg = edgeSegments[j];
+			myShape.add(seg);
+			var edgeIndex = j;
+			if (edge.reversed) {
+				edgeIndex = numSegments - j - 1;
+			}
+			var data = {
+				e: edge,
+				index: edgeIndex,
+				isEndpt: j == 0
+			}
+			ptData.push(data);
+		}
+	}
+	myShape.closed = true;
+	myShape.pivot = origin;
+	myShape.data = ptData;
+	return myShape;
+}
+
+function drawDots(myShape) {
 	var editDots = new Group();
-	var segs = myPath.segments;
+	var segs = myShape.segments;
 	for (var i = 0; i < segs.length; i++) {
 		var pt = segs[i].point;
 		var dot = new Path.Circle(pt, dotRadius);
-		if (i%4 == 0) {
+		if (myShape.data[i].isEndpt) {
 			dot.fillColor = 'lightgray';
 		} else {
 			dot.fillColor = 'darkturquoise';
@@ -58,10 +100,6 @@ function drawDots(myPath) {
 }
 
 var triangles = [];
-
-var sl = 100;
-var origin = new Point(0,0);
-var endpt = new Point(sl,0);
 
 var protoEdge = createProtoEdge(origin,endpt);
 var protoTriangle = createProtoTriangle(protoEdge);
@@ -85,8 +123,6 @@ function addTriangle(x,y,theta) {
 function trianglePattern() {
   var x0 = 150;
   var y0 = 300;
-  var s = 100;
-  var h = s * Math.sqrt(3) / 2;
   // row 1
   addTriangle(x0,y0,0);
   addTriangle(x0+s,y0,60);
@@ -121,19 +157,17 @@ function onMouseDown(event) {
   if (hitResult) {
     // find segment on protoEdge
     var triangleIndex = hitResult.segment.index;
-    var numSegments = protoEdge.segments.length-1;
-    var protoIndex = triangleIndex % numSegments;
-    var selectedSide = Math.floor(triangleIndex / numSegments);
-    if (selectedSide == 1) {
-      protoIndex = numSegments - protoIndex;
-    }
-    if (protoIndex > 0 && protoIndex < numSegments) {
+		var ptData = protoTriangle.data[triangleIndex];
+    var numSegments = ptData.e.proto.segments.length;
+    var protoIndex = ptData.index;
+    if (!ptData.isEndpt) {
       selectedSegment = protoEdge.segments[protoIndex];
     }
-    segmentAngle = -60 * selectedSide;
+    segmentAngle = ptData.e.theta;
 
-    console.log('t',triangleIndex,' s',selectedSide,' p',protoIndex);
+		console.log(ptData);
   }
+
 }
 
 function onMouseDrag(event) {
