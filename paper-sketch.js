@@ -2,8 +2,10 @@ var hitOptions = {
 	segments: true,
 	stroke: false,
 	fill: false,
-	tolerance: 5
+	tolerance: 8,
 };
+
+var dotRadius = hitOptions.tolerance / 2;
 
 function createProtoEdge(startpt,endpt) {
   var protoEdge = new Path();
@@ -34,8 +36,25 @@ function createProtoTriangle(protoEdge) {
   triangle.removeSegment(12);
 
   triangle.fillColor = 'paleturquoise';
+	triangle.strokeColor = 'darkturquoise';
 
   return triangle;
+}
+
+function drawDots(myPath) {
+	var editDots = new Group();
+	var segs = myPath.segments;
+	for (var i = 0; i < segs.length; i++) {
+		var pt = segs[i].point;
+		var dot = new Path.Circle(pt, dotRadius);
+		if (i%4 == 0) {
+			dot.fillColor = 'lightgray';
+		} else {
+			dot.fillColor = 'darkturquoise';
+		}
+		editDots.addChild(dot);
+	}
+	return editDots;
 }
 
 var triangles = [];
@@ -51,7 +70,9 @@ trianglePattern();
 protoTriangle.translate(50,100);
 protoEdge.translate(50,50);
 
-protoTriangle.selected = true;
+protoTriangle.selected = false;
+
+var editDots = drawDots(protoTriangle);
 
 function addTriangle(x,y,theta) {
   var tri = protoTriangle.clone();
@@ -91,11 +112,11 @@ function stampTriangles() {
 
 var selectedSegment;
 var segmentAngle;
+
 function onMouseDown(event) {
   selectedSegment = null;
-  var hitResult = project.hitTest(event.point, hitOptions);
+  var hitResult = protoTriangle.hitTest(event.point, hitOptions);
   if (!hitResult) return;
-  if (hitResult.item != protoTriangle) return;
 
   if (hitResult) {
     // find segment on protoEdge
@@ -121,12 +142,15 @@ function onMouseDrag(event) {
     protoEdge.translate(-50,-50);
     protoTriangle.remove();
     protoTriangle = createProtoTriangle(protoEdge);
-    protoTriangle.selected = true;
+    protoTriangle.selected = false;
 
     stampTriangles();
 
     protoEdge.translate(50,50);
     protoTriangle.translate(50,100);
+
+		editDots.remove();
+		editDots = drawDots(protoTriangle);
 
     if (protoTriangle.getCrossings(protoTriangle).length > 0) {
       protoTriangle.fillColor = 'red';
