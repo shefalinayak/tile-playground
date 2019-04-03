@@ -11,8 +11,15 @@ var h = s * Math.sqrt(3) / 2;
 var origin = new Point(0,0);
 var endpt = new Point(s,0);
 
-function createProtoEdge(startpt,endpt) {
-  var protoEdge = new Path();
+var protoEdge = new Path();
+var protoTriangle = new Path();
+var triangles = new Group();
+var editDots = new Group();
+
+function createProtoEdge() {
+	protoEdge.remove()
+  protoEdge = new Path();
+
   protoEdge.add(origin, endpt);
   protoEdge.pivot = origin;
   protoEdge.insert(1, new Point(50,0));
@@ -20,8 +27,6 @@ function createProtoEdge(startpt,endpt) {
   protoEdge.insert(3, new Point(75,0));
 
   protoEdge.strokeColor = 'black';
-
-  return protoEdge;
 }
 
 function Edge(proto,delta,theta,reversed) {
@@ -38,21 +43,6 @@ function Edge(proto,delta,theta,reversed) {
 		edgePath.remove();
 		return edgePath;
 	}
-}
-
-function createProtoTriangle(protoEdge) {
-	var e1 = new Edge(protoEdge,new Point(0,0),0,false);
-	var e2 = new Edge(protoEdge,new Point(s/2,h),-60,true);
-	var e3 = new Edge(protoEdge,new Point(s/2,h),-120,false);
-
-	var edges = [e1,e2,e3];
-
-  var triangle = createShapeFromEdges(edges);
-
-  triangle.fillColor = 'paleturquoise';
-	triangle.strokeColor = 'darkturquoise';
-
-  return triangle;
 }
 
 function createShapeFromEdges(edges) {
@@ -83,44 +73,33 @@ function createShapeFromEdges(edges) {
 	return myShape;
 }
 
-function drawDots(myShape) {
-	var editDots = new Group();
-	var segs = myShape.segments;
-	for (var i = 0; i < segs.length; i++) {
-		var pt = segs[i].point;
-		var dot = new Path.Circle(pt, dotRadius);
-		if (myShape.data[i].isEndpt) {
-			dot.fillColor = 'lightgray';
-		} else {
-			dot.fillColor = 'darkturquoise';
-		}
-		editDots.addChild(dot);
-	}
-	return editDots;
+function createProtoTriangle() {
+	protoTriangle.remove();
+
+	var e1 = new Edge(protoEdge,new Point(0,0),0,false);
+	var e2 = new Edge(protoEdge,new Point(s/2,h),-60,true);
+	var e3 = new Edge(protoEdge,new Point(s/2,h),-120,false);
+
+	var edges = [e1,e2,e3];
+
+  protoTriangle = createShapeFromEdges(edges);
+
+  protoTriangle.fillColor = 'paleturquoise';
+	protoTriangle.strokeColor = 'darkturquoise';
 }
-
-var triangles = [];
-
-var protoEdge = createProtoEdge(origin,endpt);
-var protoTriangle = createProtoTriangle(protoEdge);
-trianglePattern();
-
-protoTriangle.translate(50,100);
-protoEdge.translate(50,50);
-
-protoTriangle.selected = false;
-
-var editDots = drawDots(protoTriangle);
 
 function addTriangle(x,y,theta) {
   var tri = protoTriangle.clone();
   tri.position = new Point(x,y);
   tri.rotate(theta);
   tri.selected = false;
-  triangles.push(tri);
+  triangles.addChild(tri);
 }
 
 function trianglePattern() {
+	triangles.remove();
+	triangles = new Group();
+
   var x0 = 150;
   var y0 = 300;
   // row 1
@@ -138,12 +117,49 @@ function trianglePattern() {
   addTriangle(x0+s*3,y0+2*h,180);
 }
 
-function stampTriangles() {
-  var numTriangles = triangles.length;
-  for (var i = 0; i < numTriangles; i++) {
-    triangles.pop().remove();
-  }
-  trianglePattern();
+function drawDots(myShape) {
+	editDots.remove();
+	editDots = new Group();
+
+	var segs = myShape.segments;
+	for (var i = 0; i < segs.length; i++) {
+		var pt = segs[i].point;
+		var dot = new Path.Circle(pt, dotRadius);
+		if (myShape.data[i].isEndpt) {
+			dot.fillColor = 'lightgray';
+		} else {
+			dot.fillColor = 'darkturquoise';
+		}
+		editDots.addChild(dot);
+	}
+}
+
+function drawFirst() {
+	createProtoEdge();
+	createProtoTriangle();
+
+	trianglePattern();
+
+	protoTriangle.translate(50,100);
+	protoEdge.translate(50,50);
+
+	protoTriangle.selected = false;
+
+	drawDots(protoTriangle);
+}
+
+drawFirst();
+
+function drawUpdate() {
+	protoEdge.translate(-50,-50);
+	createProtoTriangle();
+
+	trianglePattern();
+
+	protoEdge.translate(50,50);
+	protoTriangle.translate(50,100);
+
+	drawDots(protoTriangle);
 }
 
 var selectedSegment;
@@ -173,18 +189,8 @@ function onMouseDown(event) {
 function onMouseDrag(event) {
   if (selectedSegment) {
     selectedSegment.point += event.delta.rotate(segmentAngle * -1);
-    protoEdge.translate(-50,-50);
-    protoTriangle.remove();
-    protoTriangle = createProtoTriangle(protoEdge);
-    protoTriangle.selected = false;
 
-    stampTriangles();
-
-    protoEdge.translate(50,50);
-    protoTriangle.translate(50,100);
-
-		editDots.remove();
-		editDots = drawDots(protoTriangle);
+		drawUpdate();
 
     if (protoTriangle.getCrossings(protoTriangle).length > 0) {
       protoTriangle.fillColor = 'red';
