@@ -260,6 +260,8 @@ function onMouseDown(event) {
 			var newEditDot = new Path.Circle(event.point,dotRadius);
 			newEditDot.fillColor = 'darkturquoise';
 			editDots.addChild(newEditDot);
+
+			drawUpdate();
 		}
 
 		console.log(ptData);
