@@ -1,21 +1,49 @@
+/*----------------------------------------------------------------------------
+ * TILE PLAYGROUND
+ * interactive tool for designing tiling shapes
+ *    ___ ___ ___ ___ ___
+ *  /\  /\  /\  /\  /\  /\
+ * /__\/__\/__\/__\/__\/__\
+ * \  /\  /\  /\  /\  /\  /
+ *  \/__\/__\/__\/__\/__\/
+ *  /\  /\  /\  /\  /\  /\
+ * /__\/__\/__\/__\/__\/__\
+ *---------------------------------------------------------------------------*/
+
+
+/*----------------------------------------------------------------------------
+ * GLOBAL VARIABLES
+ *---------------------------------------------------------------------------*/
+
 var hitOptions = {
 	segments: true,
-	stroke: false,
+	stroke: true,
 	fill: false,
 	tolerance: 8,
 };
 
 var dotRadius = hitOptions.tolerance / 2;
-var s = 100;
-var h = s * Math.sqrt(3) / 2;
 var origin = new Point(0,0);
-var endpt = new Point(s,0);
+var endpt = new Point(100,0);
 
 var protoEdge = new Path();
-var protoTriangle = new Path();
-var triangles = new Group();
 var editDots = new Group();
 
+var selectedSegment;
+var segmentAngle;
+
+// TRIANGLE-SPECIFIC
+var s = endpt.x;
+var h = s * Math.sqrt(3) / 2;
+var protoTriangle = new Path();
+var triangles = new Group();
+
+/*----------------------------------------------------------------------------
+ * CONSTRUCTING GEOMETRY
+ *---------------------------------------------------------------------------*/
+
+// initializes the protoedges
+// should only be called once at the start
 function createProtoEdge() {
 	protoEdge.remove()
   protoEdge = new Path();
@@ -29,6 +57,7 @@ function createProtoEdge() {
   protoEdge.strokeColor = 'black';
 }
 
+// an Edge is a reference to a protoedge and a transformation on that protoedge
 function Edge(proto,delta,theta,reversed) {
 	this.proto = proto;
 	this.delta = delta;
@@ -45,6 +74,8 @@ function Edge(proto,delta,theta,reversed) {
 	}
 }
 
+// creates a closed shape given an array of edges [e0,e1,e2...]
+// assumes continuity: e0 ends where e1 starts, etc
 function createShapeFromEdges(edges) {
 	var myShape = new Path();
 	var ptData = [];
@@ -73,6 +104,11 @@ function createShapeFromEdges(edges) {
 	return myShape;
 }
 
+/*----------------------------------------------------------------------------
+ * TRIANGLE GEOMETRY
+ *---------------------------------------------------------------------------*/
+
+// creates an equilateral triangle from a single protoedge
 function createProtoTriangle() {
 	protoTriangle.remove();
 
@@ -88,6 +124,7 @@ function createProtoTriangle() {
 	protoTriangle.strokeColor = 'darkturquoise';
 }
 
+// add a triangle based on the protoTriangle
 function addTriangle(x,y,theta) {
   var tri = protoTriangle.clone();
   tri.position = new Point(x,y);
@@ -96,6 +133,7 @@ function addTriangle(x,y,theta) {
   triangles.addChild(tri);
 }
 
+// draws a simple pattern of tiling triangles
 function trianglePattern() {
 	triangles.remove();
 	triangles = new Group();
@@ -117,6 +155,12 @@ function trianglePattern() {
   addTriangle(x0+s*3,y0+2*h,180);
 }
 
+/*----------------------------------------------------------------------------
+ * DRAWING FUNCTIONS
+ *---------------------------------------------------------------------------*/
+
+// draws dots at the vertices of a shape
+// the path must have a data array with vertex information
 function drawDots(myShape) {
 	editDots.remove();
 	editDots = new Group();
@@ -134,22 +178,21 @@ function drawDots(myShape) {
 	}
 }
 
+// initial drawing of geometry
 function drawFirst() {
 	createProtoEdge();
-	createProtoTriangle();
 
+	createProtoTriangle();
 	trianglePattern();
 
 	protoTriangle.translate(50,100);
 	protoEdge.translate(50,50);
 
-	protoTriangle.selected = false;
-
 	drawDots(protoTriangle);
 }
 
-drawFirst();
-
+// recalculates and redraws all geometry except protoedges
+// protoedges are updated by user action--never redraw them!
 function drawUpdate() {
 	protoEdge.translate(-50,-50);
 	createProtoTriangle();
@@ -162,30 +205,69 @@ function drawUpdate() {
 	drawDots(protoTriangle);
 }
 
-var selectedSegment;
-var segmentAngle;
+drawFirst();
 
+/*----------------------------------------------------------------------------
+ * USER INTERACTION
+ *---------------------------------------------------------------------------*/
+
+// figures out which vertex was clicked, and adds/deletes vertex if necessary
 function onMouseDown(event) {
   selectedSegment = null;
   var hitResult = protoTriangle.hitTest(event.point, hitOptions);
   if (!hitResult) return;
 
+	// delete point
+	if (event.modifiers.shift) {
+		if (hitResult.type == 'segment') {
+			var ptData = protoTriangle.data[hitResult.segment.index];
+			ptData.e.proto.segments[ptData.index].remove();
+			drawUpdate();
+		}
+		return;
+	}
+
+	var ptData;
   if (hitResult) {
-    // find segment on protoEdge
-    var triangleIndex = hitResult.segment.index;
-		var ptData = protoTriangle.data[triangleIndex];
-    var numSegments = ptData.e.proto.segments.length;
-    var protoIndex = ptData.index;
-    if (!ptData.isEndpt) {
-      selectedSegment = protoEdge.segments[protoIndex];
-    }
-    segmentAngle = ptData.e.theta;
+		if (hitResult.type == 'segment') { // vertex already exists
+			var triangleIndex = hitResult.segment.index;
+			ptData = protoTriangle.data[triangleIndex];
+			if (!ptData.isEndpt) {
+				selectedSegment = protoEdge.segments[ptData.index];
+				segmentAngle = ptData.e.theta;
+			}
+		} else if (hitResult.type == 'stroke') { // create a new vertex
+			// get info about nearest point
+			var triangleIndex = hitResult.location.index;
+			ptData = protoTriangle.data[triangleIndex];
+			var prevPoint;
+			if (ptData.e.reversed) {
+				prevPoint = protoTriangle.segments[triangleIndex+1].point;
+				segmentAngle = ptData.e.theta;
+				ptData = protoTriangle.data[triangleIndex+1];
+			} else {
+				prevPoint = protoTriangle.segments[triangleIndex].point;
+				segmentAngle = ptData.e.theta;
+			}
+			// create new point on protoedge
+			var delta = event.point - prevPoint;
+			delta = delta.rotate(segmentAngle * -1);
+			var prevProtoPoint = ptData.e.proto.segments[ptData.index].point;
+			var newProtoPoint = prevProtoPoint + delta;
+			var insertIndex = ptData.index+1;
+			selectedSegment = ptData.e.proto.insert(ptData.index+1, newProtoPoint);
+			// draw edit dot for the new point
+			var newEditDot = new Path.Circle(event.point,dotRadius);
+			newEditDot.fillColor = 'darkturquoise';
+			editDots.addChild(newEditDot);
+		}
 
 		console.log(ptData);
   }
 
 }
 
+// moves a vertex according to mouse drag
 function onMouseDrag(event) {
   if (selectedSegment) {
     selectedSegment.point += event.delta.rotate(segmentAngle * -1);
