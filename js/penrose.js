@@ -102,7 +102,7 @@ function createPattern(protoShapes) {
     }
     pt = pt.rotate(36);
     for (var j = 0; j < 5; j++) {
-      addKite(pt,j*72);
+      addKite(pt,36+j*72);
     }
   }
 

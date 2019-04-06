@@ -104,6 +104,16 @@ function resetAll(group) {
   }
 }
 
+function checkForSelfIntersections(shapes) {
+  for (var i = 0; i < shapes.length; i++) {
+    var protoShape = shapes[i];
+    if (protoShape.getCrossings(protoShape).length > 0) {
+      protoShape.fillColor = 'lightcoral';
+			protoShape.strokeColor = 'firebrick';
+    }
+  }
+}
+
 function TilePlayground(createEdges,createShapes,createPattern,arrange) {
   this.edges = createEdges();
   this.shapes = createShapes(this.edges);
@@ -117,6 +127,8 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
 
     this.shapes.remove();
     this.shapes = createShapes(this.edges);
+
+		checkForSelfIntersections(this.shapes.children);
 
     this.pattern.remove();
     this.pattern = createPattern(this.shapes);
@@ -136,15 +148,6 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
   	fill: false,
   	tolerance: dotRadius * 2,
   };
-
-  this.checkForSelfIntersections = function() {
-    for (var i = 0; i < this.shapes.length; i++) {
-      var protoShape = this.shapes[i];
-      if (protoShape.getCrossings(protoShape).length > 0) {
-        protoShape.fillColor = 'red';
-      }
-    }
-  }
 
   // figures out which vertex was clicked, and adds/deletes vertex if necessary
   this.onMouseDown = function(event) {
@@ -213,8 +216,6 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
       this.selectedSegment.point += event.delta.rotate(this.segmentAngle * -1);
 
   		this.refresh();
-
-      this.checkForSelfIntersections();
     }
   }
 
