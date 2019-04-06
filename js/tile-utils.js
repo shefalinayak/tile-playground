@@ -128,12 +128,12 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
     this.shapes.remove();
     this.shapes = createShapes(this.edges);
 
-		checkForSelfIntersections(this.shapes.children);
-
     this.pattern.remove();
     this.pattern = createPattern(this.shapes);
 
     arrange(this.edges,this.shapes);
+
+		checkForSelfIntersections(this.shapes.children);
 
     this.editDots.remove();
     this.editDots = drawDotsForGroup(this.shapes);
