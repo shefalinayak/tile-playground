@@ -2,21 +2,51 @@ html,
   body {
     margin: auto;
     width: 800px;
-    overflow: hidden;
     height: 100%;
     background: white;
+    font-family: 'Roboto', sans-serif;
+}
+
+h1 {
+  font-size: 3em;
+  font-family: 'Josefin Sans', sans-serif;
+}
+
+p {
+  font-size: 0.8em;
 }
 
 canvas {
   width: 800px;
-  height: 800px;
+  height: 700px;
+}
+
+.header {
+  position: relative;
 }
 
 button {
   background-color: paleturquoise;
   border: 1px solid darkturquoise;
-  color: darkturquoise;
-  padding: 15px 30px;
+  color: black;
+  padding: 3px 5px;
   text-align: center;
-  font-size: 32px;
+  font-size: 0.8em;
+  font-family: 'Roboto', sans-serif;
+  position: absolute;
+  right: 10px;
+  bottom: 0px;
+}
+
+button:hover {
+  background-color: darkturquoise;
+}
+
+a {
+  color: gray;
+  font-weight: normal;
+}
+
+a:hover {
+  color: darkturquoise;
 }

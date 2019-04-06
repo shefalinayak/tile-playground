@@ -41,7 +41,7 @@ function createPattern(protoShapes) {
   var triangle = protoShapes.children[0];
 
   var x0 = 150;
-  var y0 = 400;
+  var y0 = 300;
 
   var addTriangle = function(x,y,theta) {
     addShape(triangle,triangles,x0+x,y0+y,theta);
@@ -61,12 +61,14 @@ function createPattern(protoShapes) {
   addTriangle(s*2,2*h,-120);
   addTriangle(s*3,2*h,180);
 
+  triangles.scale(0.75,0.75);
+
   return triangles;
 }
 
 function arrange(protoEdges,protoShapes) {
-  protoEdges.translate(75,75);
-  protoShapes.translate(300,150);
+  protoEdges.translate(150,150);
+  protoShapes.translate(425,100);
 }
 
 var TrianglePlayground = new TilePlayground(
@@ -84,5 +86,5 @@ document.getElementById("downloadSVG").onclick = function() {
   TrianglePlayground.downloadSVG();
 }
 
-//var border = new Path.Rectangle(origin,new Point(800,800));
-//border.strokeColor = 'darkturquoise';
+// var border = new Path.Rectangle(origin,new Point(800,800));
+// border.strokeColor = 'darkturquoise';
