@@ -72,7 +72,7 @@ function drawDots(myShape) {
 		if (myShape.data[i].isEndpt) {
 			dot.fillColor = 'lightgray';
 		} else {
-			dot.fillColor = 'darkturquoise';
+			dot.fillColor = myShape.strokeColor;
 		}
 		editDots.addChild(dot);
 	}

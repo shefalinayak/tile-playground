@@ -12,6 +12,11 @@ h1 {
   font-family: 'Josefin Sans', sans-serif;
 }
 
+h2 {
+  font-size: 2em;
+  font-family: 'Josefin Sans', sans-serif;
+}
+
 p {
   font-size: 0.8em;
 }
