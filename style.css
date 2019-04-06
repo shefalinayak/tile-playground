@@ -1,0 +1,22 @@
+html,
+  body {
+    margin: auto;
+    width: 800px;
+    overflow: hidden;
+    height: 100%;
+    background: white;
+}
+
+canvas {
+  width: 800px;
+  height: 800px;
+}
+
+button {
+  background-color: paleturquoise;
+  border: 1px solid darkturquoise;
+  color: darkturquoise;
+  padding: 15px 30px;
+  text-align: center;
+  font-size: 32px;
+}
