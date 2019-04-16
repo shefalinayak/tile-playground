@@ -30,7 +30,7 @@ function createEdges() {
   return new Group([pEdgeA,pEdgeB,pEdgeC]);
 }
 
-function createHexagon(protoEdges) {
+function createShapes(protoEdges) {
   var pEdgeA = protoEdges.children[0];
   var pEdgeB = protoEdges.children[1];
   var pEdgeC = protoEdges.children[2];
@@ -106,19 +106,19 @@ function arrange(protoEdges,protoShapes) {
   protoShapes.translate(425,100);
 }
 
-var HexagonPlayground = new TilePlayground(
-  createEdges,createHexagon,createPattern,arrange);
+var Playground = new TilePlayground(
+  createEdges,createShapes,createPattern,arrange);
 
 function onMouseDown(event) {
-  HexagonPlayground.onMouseDown(event);
+  Playground.onMouseDown(event);
 }
 
 function onMouseDrag(event) {
-  HexagonPlayground.onMouseDrag(event);
+  Playground.onMouseDrag(event);
 }
 
 document.getElementById("downloadSVG").onclick = function() {
-  HexagonPlayground.downloadSVG();
+  Playground.downloadSVG();
 }
 
 // var border = new Path.Rectangle(origin,new Point(800,800));

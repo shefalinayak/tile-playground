@@ -31,7 +31,7 @@ function createEdges() {
   return new Group([longEdge,shortEdge]);
 }
 
-function createKiteAndDart(protoEdges) {
+function createShapes(protoEdges) {
   var longEdge = protoEdges.children[0];
   var shortEdge = protoEdges.children[1];
 
@@ -125,19 +125,19 @@ function arrange(protoEdges,protoShapes) {
   dart.translate(400+2*s,100);
 }
 
-var TrianglePlayground = new TilePlayground(
-  createEdges,createKiteAndDart,createPattern,arrange);
+var Playground = new TilePlayground(
+  createEdges,createShapes,createPattern,arrange);
 
 function onMouseDown(event) {
-  TrianglePlayground.onMouseDown(event);
+  Playground.onMouseDown(event);
 }
 
 function onMouseDrag(event) {
-  TrianglePlayground.onMouseDrag(event);
+  Playground.onMouseDrag(event);
 }
 
 document.getElementById("downloadSVG").onclick = function() {
-  TrianglePlayground.downloadSVG();
+  Playground.downloadSVG();
 }
 
 // var border = new Path.Rectangle(origin,new Point(800,800));

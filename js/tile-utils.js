@@ -181,22 +181,24 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
   			// get info about nearest point
   			var shapeIndex = hitResult.location.index;
   			ptData = protoShape.data[shapeIndex];
-  			var prevPoint;
-  			if (ptData.e.reversed) {
-  				prevPoint = protoShape.segments[shapeIndex+1].point;
-  				this.segmentAngle = ptData.e.theta;
-  				ptData = protoShape.data[shapeIndex+1];
+				var edge = ptData.e;
+				this.segmentAngle = edge.theta;
+				var prevPoint, prevProtoPoint, ptIndex;
+  			if (edge.reversed) {
+					var numPoints = protoShape.segments.length;
+  				prevPoint = protoShape.segments[(shapeIndex+1)%numPoints].point;
+					ptIndex = ptData.index - 1;
   			} else {
   				prevPoint = protoShape.segments[shapeIndex].point;
-  				this.segmentAngle = ptData.e.theta;
+					ptIndex = ptData.index;
   			}
   			// create new point on protoedge
   			var delta = event.point - prevPoint;
   			delta = delta.rotate(this.segmentAngle * -1);
-  			var prevProtoPoint = ptData.e.proto.segments[ptData.index].point;
+				var prevProtoPoint = edge.proto.segments[ptIndex].point;
   			var newProtoPoint = prevProtoPoint + delta;
-  			var insertIndex = ptData.index+1;
-  			this.selectedSegment = ptData.e.proto.insert(ptData.index+1, newProtoPoint);
+  			var insertIndex = ptIndex+1;
+  			this.selectedSegment = edge.proto.insert(ptIndex+1, newProtoPoint);
   			// draw edit dot for the new point
   			var newEditDot = new Path.Circle(event.point,dotRadius);
   			newEditDot.fillColor = 'darkturquoise';
@@ -205,7 +207,7 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
   			this.refresh();
   		}
 
-  		console.log(ptData);
+  		//console.log(ptData);
     }
 
   }

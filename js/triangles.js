@@ -4,31 +4,46 @@ var endpt = new Point(150,0);
 var s = endpt.x;
 var h = s * Math.sqrt(3) / 2;
 
-function createEdge() {
-  var protoEdge = new Path();
+function createEdges() {
+  var pEdgeA = new Path();
 
-  protoEdge.add(origin, endpt);
-  protoEdge.pivot = origin;
+  pEdgeA.add(origin, endpt);
+  pEdgeA.pivot = origin;
+  pEdgeA.strokeColor = 'black';
 
-  protoEdge.insert(1, new Point(50,0));
-  protoEdge.insert(2, new Point(70,-10));
-  protoEdge.insert(3, new Point(75,0));
+  pEdgeA.insert(1,new Point(30,0));
+  pEdgeA.insert(2,new Point(40,10));
+  pEdgeA.insert(3,new Point(45,0));
 
-  protoEdge.strokeColor = 'black';
+  var pEdgeB = new Path();
 
-  return new Group([protoEdge]);
+  pEdgeB.add(origin, new Point(s/2,0));
+  pEdgeB.pivot = origin;
+  pEdgeB.strokeColor = 'black';
+
+  pEdgeB.insert(1,new Point(20,0));
+  pEdgeB.insert(2,new Point(20,10));
+  pEdgeB.insert(3,new Point(35,10));
+  pEdgeB.insert(4,new Point(35,0));
+
+  return new Group([pEdgeA,pEdgeB]);
 }
 
-function createTriangle(protoEdges) {
-  var protoEdge = protoEdges.children[0];
+function createShapes(protoEdges) {
+  var pEdgeA = protoEdges.children[0];
+  var pEdgeB = protoEdges.children[1];
 
-  var e1 = new Edge(protoEdge,new Point(0,0),0,false);
-  var e2 = new Edge(protoEdge,new Point(s/2,h),-60,true);
-  var e3 = new Edge(protoEdge,new Point(s/2,h),-120,false);
+  var pivot = new Point(0,-h);
 
-  var edges = [e1,e2,e3];
+  var e1 = new Edge(pEdgeA,pivot,60,false);
+  var e2 = new Edge(pEdgeB,origin,0,true);
+  var e3 = new Edge(pEdgeB,origin,180,false);
+  var e4 = new Edge(pEdgeA,pivot,120,true);
+
+  var edges = [e1,e2,e3,e4];
 
   var protoTriangle = createShapeFromEdges(edges);
+  protoTriangle.pivot = pivot;
 
   protoTriangle.fillColor = 'paleturquoise';
   protoTriangle.strokeColor = 'darkturquoise';
@@ -40,26 +55,31 @@ function createPattern(protoShapes) {
   var triangles = new Group();
   var triangle = protoShapes.children[0];
 
-  var x0 = 150;
-  var y0 = 300;
+  var x0 = 400;
+  var y0 = 450;
 
   var addTriangle = function(x,y,theta) {
     addShape(triangle,triangles,x0+x,y0+y,theta);
   };
 
-  // row 1
-  addTriangle(0,0,0);
-  addTriangle(s,0,60);
-  addTriangle(2*s,0,120);
-  addTriangle(3*s,0,120);
-  // row 1.5
-  addTriangle(s*0.5,h,0);
-  addTriangle(s*2.5,h,180);
-  // row 2
-  addTriangle(0,2*h,-60);
-  addTriangle(s,2*h,-60);
-  addTriangle(s*2,2*h,-120);
-  addTriangle(s*3,2*h,180);
+  var addTriangles = function(x,y) {
+    for (var i = 0; i < 6; i++) {
+      addTriangle(x,y,i*60);
+    }
+  };
+
+  addTriangles(s,0);
+  addTriangles(-s/2,h);
+  addTriangles(-s/2,-h);
+
+  addTriangle(s,-2*h,0);
+  addTriangle(s,-2*h,60);
+
+  addTriangle(s,2*h,120);
+  addTriangle(s,2*h,180);
+
+  addTriangle(-2*s,0,-60);
+  addTriangle(-2*s,0,-120);
 
   triangles.scale(0.75,0.75);
 
@@ -68,22 +88,28 @@ function createPattern(protoShapes) {
 
 function arrange(protoEdges,protoShapes) {
   protoEdges.translate(150,150);
-  protoShapes.translate(425,100);
+  protoShapes.translate(500,200);
+
+  var pEdgeA = protoEdges.children[0];
+  var pEdgeB = protoEdges.children[1];
+
+  pEdgeA.translate(0,-30);
+  pEdgeB.translate(0,30);
 }
 
-var TrianglePlayground = new TilePlayground(
-  createEdge,createTriangle,createPattern,arrange);
+var Playground = new TilePlayground(
+  createEdges,createShapes,createPattern,arrange);
 
 function onMouseDown(event) {
-  TrianglePlayground.onMouseDown(event);
+  Playground.onMouseDown(event);
 }
 
 function onMouseDrag(event) {
-  TrianglePlayground.onMouseDrag(event);
+  Playground.onMouseDrag(event);
 }
 
 document.getElementById("downloadSVG").onclick = function() {
-  TrianglePlayground.downloadSVG();
+  Playground.downloadSVG();
 }
 
 // var border = new Path.Rectangle(origin,new Point(800,800));
