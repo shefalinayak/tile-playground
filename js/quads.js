@@ -3,16 +3,20 @@ var endpt = new Point(150,0);
 
 var s = endpt.x;
 
-function createEdges() {
-  var pEdgeA = new Path();
+var protoEdges, protoShapes;
 
-  pEdgeA.add(origin, endpt);
-  pEdgeA.pivot = origin;
+var jaggyStart = true;
 
-  pEdgeA.strokeColor = 'black';
+var pEdgeA = new Path();
 
-  var pEdgeB = pEdgeA.clone();
+pEdgeA.add(origin, endpt);
+pEdgeA.pivot = origin;
 
+pEdgeA.strokeColor = 'black';
+
+var pEdgeB = pEdgeA.clone();
+
+if (jaggyStart) {
   pEdgeA.insert(1,new Point(70,0));
   pEdgeA.insert(2,new Point(90,10));
   pEdgeA.insert(3,new Point(90,0));
@@ -21,47 +25,43 @@ function createEdges() {
   pEdgeB.insert(2,new Point(30,10));
   pEdgeB.insert(3,new Point(50,10));
   pEdgeB.insert(4,new Point(50,0));
-
-  return new Group([pEdgeA,pEdgeB]);
 }
 
-function createShapes(protoEdges) {
-  var pEdgeA = protoEdges.children[0];
-  var pEdgeB = protoEdges.children[1];
+protoEdges = new Group([pEdgeA,pEdgeB]);
 
-  var e1 = new Edge(pEdgeA,new Point(0,0),0,false);
-  var e2 = new Edge(pEdgeB,new Point(s,0),90,false);
-  var e3 = new Edge(pEdgeA,new Point(0,s),0,true);
-  var e4 = new Edge(pEdgeB,new Point(0,0),90,true);
+var e1 = new Edge(pEdgeA,new Point(0,0),0,false);
+var e2 = new Edge(pEdgeB,new Point(s,0),90,false);
+var e3 = new Edge(pEdgeA,new Point(0,s),0,true);
+var e4 = new Edge(pEdgeB,new Point(0,0),90,true);
 
-  var edges = [e1,e2,e3,e4];
+var edges = [e1,e2,e3,e4];
 
-  var protoQuad = createShapeFromEdges(edges);
+var protoquad = new Polygon(edges,origin,'paleturquoise','darkturquoise');
 
-  protoQuad.fillColor = 'paleturquoise';
-  protoQuad.strokeColor = 'darkturquoise';
-
-  return new Group([protoQuad]);
-}
+protoShapes = [protoquad];
 
 function createPattern(protoShapes) {
   var quads = new Group();
   var quad = protoShapes.children[0];
 
-  var x0 = 50;
-  var y0 = 200;
+  var x0 = -200;
+  var y0 = 300;
+
+  var theta = protoquad.edges[1].theta;
+  var delta = pEdgeB.lastSegment.point - pEdgeB.firstSegment.point;
+  delta = delta.rotate(theta);
 
   var addQuad = function(x,y) {
     addShape(quad,quads,x0+x,y0+y,0);
   };
 
-  for (var i = 0; i < 5; i++) {
-    for (var j = 0; j < 4; j++) {
-      addQuad(i*s,j*s);
+  for (var i = 0; i < 12; i++) {
+    for (var j = 0; j < 8; j++) {
+      addQuad(i*s+(j*delta.x),j*delta.y);
     }
   }
 
-  quads.scale(0.6,0.6);
+  quads.scale(0.6,0.6,new Point(x0,y0));
 
   return quads;
 }
@@ -78,7 +78,37 @@ function arrange(protoEdges,protoShapes) {
 }
 
 var Playground = new TilePlayground(
-  createEdges,createShapes,createPattern,arrange);
+  protoEdges,protoShapes,createPattern,arrange);
+
+Playground.editableEndpoints = true;
+Playground.onEndpointEdit = function(event,endpointIndex) {
+  var endpts = [];
+  var quad = Playground.shapes[0];
+  var path = quad.path;
+  var data = path.data;
+  for (var i = 0; i < path.segments.length; i++) {
+    var pt = path.segments[i].point;
+    if (data[i].isEndpt >= 0) {
+      endpts.push(pt);
+    }
+  }
+  if (endpointIndex == 2) {
+    var ptA = endpts[1].clone();
+    var ptB = endpts[2].clone();
+
+    var oldEdge = ptB - ptA;
+    var newEdge = oldEdge + event.delta;
+
+    var rotation = endpt.getDirectedAngle(newEdge);
+    var scaleFactor = newEdge.length / oldEdge.length;
+    pEdgeB.scale(scaleFactor,origin);
+
+    quad.edges[1] = new Edge(pEdgeB,new Point(s,0),rotation,false);
+    quad.edges[2] = new Edge(pEdgeA,origin + newEdge,0,true);
+    quad.edges[3] = new Edge(pEdgeB,origin,rotation,true);
+    quad.calculatePath();
+  }
+};
 
 function onMouseDown(event) {
   Playground.onMouseDown(event);

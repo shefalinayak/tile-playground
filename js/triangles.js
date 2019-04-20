@@ -4,52 +4,47 @@ var endpt = new Point(150,0);
 var s = endpt.x;
 var h = s * Math.sqrt(3) / 2;
 
-function createEdges() {
-  var pEdgeA = new Path();
+var protoEdges,protoShapes;
 
-  pEdgeA.add(origin, endpt);
-  pEdgeA.pivot = origin;
-  pEdgeA.strokeColor = 'black';
+var jaggyStart = true;
 
+var pEdgeA = new Path();
+
+pEdgeA.add(origin, endpt);
+pEdgeA.pivot = origin;
+pEdgeA.strokeColor = 'black';
+
+var pEdgeB = new Path();
+
+pEdgeB.add(origin, new Point(s/2,0));
+pEdgeB.pivot = origin;
+pEdgeB.strokeColor = 'black';
+
+if (jaggyStart) {
   pEdgeA.insert(1,new Point(30,0));
   pEdgeA.insert(2,new Point(40,10));
   pEdgeA.insert(3,new Point(45,0));
-
-  var pEdgeB = new Path();
-
-  pEdgeB.add(origin, new Point(s/2,0));
-  pEdgeB.pivot = origin;
-  pEdgeB.strokeColor = 'black';
 
   pEdgeB.insert(1,new Point(20,0));
   pEdgeB.insert(2,new Point(20,10));
   pEdgeB.insert(3,new Point(35,10));
   pEdgeB.insert(4,new Point(35,0));
-
-  return new Group([pEdgeA,pEdgeB]);
 }
 
-function createShapes(protoEdges) {
-  var pEdgeA = protoEdges.children[0];
-  var pEdgeB = protoEdges.children[1];
+protoEdges = new Group([pEdgeA,pEdgeB]);
 
-  var pivot = new Point(0,-h);
+var pivot = new Point(0,-h);
 
-  var e1 = new Edge(pEdgeA,pivot,60,false);
-  var e2 = new Edge(pEdgeB,origin,0,true);
-  var e3 = new Edge(pEdgeB,origin,180,false);
-  var e4 = new Edge(pEdgeA,pivot,120,true);
+var e1 = new Edge(pEdgeA,pivot,60,false);
+var e2 = new Edge(pEdgeB,origin,0,true);
+var e3 = new Edge(pEdgeB,origin,180,false);
+var e4 = new Edge(pEdgeA,pivot,120,true);
 
-  var edges = [e1,e2,e3,e4];
+var edges = [e1,e2,e3,e4];
 
-  var protoTriangle = createShapeFromEdges(edges);
-  protoTriangle.pivot = pivot;
+var triangle = new Polygon(edges,pivot,'paleturquoise','darkturquoise');
 
-  protoTriangle.fillColor = 'paleturquoise';
-  protoTriangle.strokeColor = 'darkturquoise';
-
-  return new Group([protoTriangle]);
-}
+protoShapes = [triangle];
 
 function createPattern(protoShapes) {
   var triangles = new Group();
@@ -98,7 +93,7 @@ function arrange(protoEdges,protoShapes) {
 }
 
 var Playground = new TilePlayground(
-  createEdges,createShapes,createPattern,arrange);
+  protoEdges,protoShapes,createPattern,arrange);
 
 function onMouseDown(event) {
   Playground.onMouseDown(event);

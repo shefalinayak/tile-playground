@@ -30,34 +30,52 @@ function Edge(proto,delta,theta,reversed) {
 	}
 }
 
-// creates a closed shape given an array of edges [e0,e1,e2...]
-// assumes continuity: e0 ends where e1 starts, etc
-function createShapeFromEdges(edges) {
-	var myShape = new Path();
-	var ptData = [];
-	for (var i = 0; i < edges.length; i++) {
-		var edge = edges[i];
-		var edgeSegments = edge.getPath().segments;
-		var numSegments = edgeSegments.length;
-		for (var j = 0; j < numSegments-1; j++) {
-			var seg = edgeSegments[j];
-			myShape.add(seg);
-			var edgeIndex = j;
-			if (edge.reversed) {
-				edgeIndex = numSegments - j - 1;
+// a Polygon is a set of Edges with rotations, translations, and reversions
+// it can be used to create a closed path shape
+function Polygon(edges,pivot,fill,stroke) {
+	this.edges = edges;
+
+	// creates a closed shape given an array of edges [e0,e1,e2...]
+	// assumes continuity: e0 ends where e1 starts, etc
+	this.calculatePath = function() {
+		if (this.path) this.path.remove();
+		var myShape = new Path();
+		var ptData = [];
+		var endptCount = 0;
+		for (var i = 0; i < this.edges.length; i++) {
+			var edge = this.edges[i];
+			var edgeSegments = edge.getPath().segments;
+			var numSegments = edgeSegments.length;
+			for (var j = 0; j < numSegments-1; j++) {
+				var seg = edgeSegments[j];
+				myShape.add(seg);
+				var edgeIndex = j;
+				if (edge.reversed) {
+					edgeIndex = numSegments - j - 1;
+				}
+				var endpointIndex = -1;
+				if (j == 0) {
+					endpointIndex = endptCount;
+					endptCount += 1;
+				}
+				var data = {
+					e: edge,
+					index: edgeIndex,
+					isEndpt: endpointIndex
+				}
+				ptData.push(data);
 			}
-			var data = {
-				e: edge,
-				index: edgeIndex,
-				isEndpt: j == 0
-			}
-			ptData.push(data);
 		}
-	}
-	myShape.closed = true;
-	myShape.pivot = origin;
-	myShape.data = ptData;
-	return myShape;
+		myShape.closed = true;
+		myShape.pivot = pivot;
+		myShape.data = ptData;
+		myShape.fillColor = fill;
+		myShape.strokeColor = stroke;
+		this.path = myShape;
+		return this.path;
+	};
+
+	this.path = this.calculatePath();
 }
 
 // draws dots at the vertices of a shape
@@ -69,10 +87,10 @@ function drawDots(myShape) {
 	for (var i = 0; i < segs.length; i++) {
 		var pt = segs[i].point;
 		var dot = new Path.Circle(pt, dotRadius);
-		if (myShape.data[i].isEndpt) {
-			dot.fillColor = 'lightgray';
-		} else {
+		if (myShape.data[i].isEndpt < 0) {
 			dot.fillColor = myShape.strokeColor;
+		} else {
+			dot.fillColor = 'lightgray';
 		}
 		editDots.addChild(dot);
 	}
@@ -114,33 +132,49 @@ function checkForSelfIntersections(shapes) {
   }
 }
 
-function TilePlayground(createEdges,createShapes,createPattern,arrange) {
-  this.edges = createEdges();
-  this.shapes = createShapes(this.edges);
-  this.pattern = createPattern(this.shapes);
+function TilePlayground(edges,shapes,createPattern,arrange) {
+  this.edges = edges;
+  this.shapes = shapes;
+	this.shapePaths = new Group();
 
-  this.arrange = arrange(this.edges,this.shapes);
-  this.editDots = drawDotsForGroup(this.shapes);
+	this.updateShapes = function() {
+		this.shapePaths.remove();
+		this.shapePaths = new Group();
+		for (var i = 0; i < this.shapes.length; i++) {
+			var path = this.shapes[i].calculatePath();
+			this.shapePaths.addChild(path);
+		}
+	};
+
+	this.updateShapes();
+
+	this.pattern = createPattern(this.shapePaths);
+	this.arrange = arrange(this.edges,this.shapePaths);
+	this.editDots = drawDotsForGroup(this.shapePaths);
 
   this.refresh = function() {
     resetAll(this.edges);
+    this.updateShapes();
 
-    this.shapes.remove();
-    this.shapes = createShapes(this.edges);
+		arrange(this.edges,this.shapePaths);
 
     this.pattern.remove();
-    this.pattern = createPattern(this.shapes);
+    this.pattern = createPattern(this.shapePaths);
 
-    arrange(this.edges,this.shapes);
-
-		checkForSelfIntersections(this.shapes.children);
+		checkForSelfIntersections(this.shapePaths.children);
 
     this.editDots.remove();
-    this.editDots = drawDotsForGroup(this.shapes);
+    this.editDots = drawDotsForGroup(this.shapePaths);
   }
 
   this.selectedSegment;
   this.segmentAngle;
+
+	this.editableEndpoints = false;
+	this.selectedEndpoint;
+	this.onEndpointEdit = function(event,endpointIndex) {
+		console.log("no endpoint edit function specified");
+	};
 
   this.hitOptions = {
   	segments: true,
@@ -151,9 +185,10 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
 
   // figures out which vertex was clicked, and adds/deletes vertex if necessary
   this.onMouseDown = function(event) {
-    this.selectedSegment = null;
+    this.selectedSegment = this.segmentAngle = null;
+		this.selectedEndpoint = -1;
 
-    var hitResult = this.shapes.hitTest(event.point, this.hitOptions);
+    var hitResult = this.shapePaths.hitTest(event.point, this.hitOptions);
     if (!hitResult) return;
 
     var protoShape = hitResult.item;
@@ -173,10 +208,12 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
   		if (hitResult.type == 'segment') { // vertex already exists
   			var shapeIndex = hitResult.segment.index;
   			ptData = protoShape.data[shapeIndex];
-  			if (!ptData.isEndpt) {
+  			if (ptData.isEndpt < 0) {
   				this.selectedSegment = ptData.e.proto.segments[ptData.index];
   				this.segmentAngle = ptData.e.theta;
-  			}
+  			} else if (this.editableEndpoints) {
+					this.selectedEndpoint = ptData.isEndpt;
+				}
   		} else if (hitResult.type == 'stroke') { // create a new vertex
   			// get info about nearest point
   			var shapeIndex = hitResult.location.index;
@@ -216,9 +253,11 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
   this.onMouseDrag = function(event) {
     if (this.selectedSegment) {
       this.selectedSegment.point += event.delta.rotate(this.segmentAngle * -1);
-
   		this.refresh();
-    }
+    } else if (this.selectedEndpoint >= 0) {
+			this.onEndpointEdit(event,this.selectedEndpoint);
+			this.refresh();
+		}
   }
 
   this.exportOptions = {
@@ -241,5 +280,5 @@ function TilePlayground(createEdges,createShapes,createPattern,arrange) {
 
 window.Edge = Edge;
 window.addShape = addShape;
-window.createShapeFromEdges = createShapeFromEdges;
+window.Polygon = Polygon;
 window.TilePlayground = TilePlayground;

@@ -3,17 +3,21 @@ var endpt = new Point(100,0);
 
 var s = endpt.x;
 
-function createEdges() {
-  var pEdgeA = new Path();
+var protoEdges, protoShapes;
 
-  pEdgeA.add(origin, endpt);
-  pEdgeA.pivot = origin;
+var jaggyStart = true;
 
-  pEdgeA.strokeColor = 'black';
+var pEdgeA = new Path();
 
-  var pEdgeB = pEdgeA.clone();
-  var pEdgeC = pEdgeA.clone();
+pEdgeA.add(origin, endpt);
+pEdgeA.pivot = origin;
 
+pEdgeA.strokeColor = 'black';
+
+var pEdgeB = pEdgeA.clone();
+var pEdgeC = pEdgeA.clone();
+
+if (jaggyStart) {
   pEdgeA.insert(1, new Point(15,0));
   pEdgeA.insert(2, new Point(20,10));
   pEdgeA.insert(3, new Point(25,0));
@@ -26,35 +30,26 @@ function createEdges() {
   pEdgeC.insert(1, new Point(15,0));
   pEdgeC.insert(2, new Point(35,10));
   pEdgeC.insert(3, new Point(35,0));
-
-  return new Group([pEdgeA,pEdgeB,pEdgeC]);
 }
 
-function createShapes(protoEdges) {
-  var pEdgeA = protoEdges.children[0];
-  var pEdgeB = protoEdges.children[1];
-  var pEdgeC = protoEdges.children[2];
+protoEdges = new Group([pEdgeA,pEdgeB,pEdgeC]);
 
-  var ptA = new Point(0,0);
-  var ptB = new Point(s * Math.sqrt(3),0);
-  var ptC = new Point(s * Math.sqrt(3) / 2, s * 3 / 2);
+var ptA = new Point(0,0);
+var ptB = new Point(s * Math.sqrt(3),0);
+var ptC = new Point(s * Math.sqrt(3) / 2, s * 3 / 2);
 
-  var e1 = new Edge(pEdgeA,ptA,-30,false);
-  var e2 = new Edge(pEdgeB,ptB,-150,true);
-  var e3 = new Edge(pEdgeB,ptB,90,false);
-  var e4 = new Edge(pEdgeC,ptC,-30,true);
-  var e5 = new Edge(pEdgeC,ptC,-150,false);
-  var e6 = new Edge(pEdgeA,ptA,90,true);
+var e1 = new Edge(pEdgeA,ptA,-30,false);
+var e2 = new Edge(pEdgeB,ptB,-150,true);
+var e3 = new Edge(pEdgeB,ptB,90,false);
+var e4 = new Edge(pEdgeC,ptC,-30,true);
+var e5 = new Edge(pEdgeC,ptC,-150,false);
+var e6 = new Edge(pEdgeA,ptA,90,true);
 
-  var edges = [e1,e2,e3,e4,e5,e6];
+var edges = [e1,e2,e3,e4,e5,e6];
 
-  var protoHexagon = createShapeFromEdges(edges);
+var hexagon = new Polygon(edges,origin,'paleturquoise','darkturquoise');
 
-  protoHexagon.fillColor = 'paleturquoise';
-  protoHexagon.strokeColor = 'darkturquoise';
-
-  return new Group([protoHexagon]);
-}
+protoShapes = [hexagon];
 
 function createPattern(protoShapes) {
   var hexagons = new Group();
@@ -107,7 +102,7 @@ function arrange(protoEdges,protoShapes) {
 }
 
 var Playground = new TilePlayground(
-  createEdges,createShapes,createPattern,arrange);
+  protoEdges,protoShapes,createPattern,arrange);
 
 function onMouseDown(event) {
   Playground.onMouseDown(event);

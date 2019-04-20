@@ -6,66 +6,53 @@ var t = s * Math.sin(Math.PI/5) / Math.sin(2*Math.PI/5);
 var sX = s * Math.cos(Math.PI/5);
 var sY = s * Math.sin(Math.PI/5);
 
-function createEdges() {
-  var longEdge = new Path();
+var protoEdges, protoShapes;
 
-  longEdge.add(origin, endpt);
-  longEdge.pivot = origin;
-  longEdge.strokeColor = 'black';
+var longEdge = new Path();
 
-  longEdge.insert(1,new Point(s/5,0));
-  longEdge.insert(2,new Point(2*s/5,0));
-  longEdge.insert(3,new Point(3*s/5,0));
-  longEdge.insert(4,new Point(4*s/5,0));
+longEdge.add(origin, endpt);
+longEdge.pivot = origin;
+longEdge.strokeColor = 'black';
 
-  var shortEdge = new Path();
+longEdge.insert(1,new Point(s/5,0));
+longEdge.insert(2,new Point(2*s/5,0));
+longEdge.insert(3,new Point(3*s/5,0));
+longEdge.insert(4,new Point(4*s/5,0));
 
-  shortEdge.add(origin, new Point(t,0));
-  shortEdge.pivot = origin;
-  shortEdge.strokeColor = 'black';
+var shortEdge = new Path();
 
-  shortEdge.insert(1,new Point(t/4,0));
-  shortEdge.insert(2,new Point(t/2,0));
-  shortEdge.insert(3,new Point(3*t/4,0));
+shortEdge.add(origin, new Point(t,0));
+shortEdge.pivot = origin;
+shortEdge.strokeColor = 'black';
 
-  return new Group([longEdge,shortEdge]);
-}
+shortEdge.insert(1,new Point(t/4,0));
+shortEdge.insert(2,new Point(t/2,0));
+shortEdge.insert(3,new Point(3*t/4,0));
 
-function createShapes(protoEdges) {
-  var longEdge = protoEdges.children[0];
-  var shortEdge = protoEdges.children[1];
+protoEdges = new Group([longEdge,shortEdge]);
 
-  var e1 = new Edge(longEdge,origin,-36,false);
-  var e2 = new Edge(shortEdge,new Point(s,0),-108,true);
-  var e3 = new Edge(shortEdge,new Point(s,0),108,false);
-  var e4 = new Edge(longEdge,origin,36,true);
+var e1 = new Edge(longEdge,origin,-36,false);
+var e2 = new Edge(shortEdge,new Point(s,0),-108,true);
+var e3 = new Edge(shortEdge,new Point(s,0),108,false);
+var e4 = new Edge(longEdge,origin,36,true);
 
-  var kiteEdges = [e1,e2,e3,e4];
+var kiteEdges = [e1,e2,e3,e4];
 
-  var protoKite = createShapeFromEdges(kiteEdges);
-  protoKite.pivot = origin;
+var kite = new Polygon(kiteEdges,origin,'palegoldenrod','yellowgreen');
 
-  protoKite.fillColor = 'palegoldenrod';
-  protoKite.strokeColor = 'yellowgreen';
+var topPt = new Point(-1*sX,-1*sY);
+var bottomPt = new Point(-1*sX,sY);
 
-  var topPt = new Point(-1*sX,-1*sY);
-  var bottomPt = new Point(-1*sX,sY);
+var e1 = new Edge(longEdge,topPt,36,true);
+var e2 = new Edge(shortEdge,topPt,72,false);
+var e3 = new Edge(shortEdge,bottomPt,-72,true);
+var e4 = new Edge(longEdge,bottomPt,-36,false);
 
-  var e1 = new Edge(longEdge,topPt,36,true);
-  var e2 = new Edge(shortEdge,topPt,72,false);
-  var e3 = new Edge(shortEdge,bottomPt,-72,true);
-  var e4 = new Edge(longEdge,bottomPt,-36,false);
+var dartEdges = [e1,e2,e3,e4];
 
-  var dartEdges = [e1,e2,e3,e4];
+var dart = new Polygon(dartEdges,origin,'paleturquoise','darkturquoise');
 
-  var protoDart = createShapeFromEdges(dartEdges);
-  protoDart.pivot = origin;
-
-  protoDart.fillColor = 'paleturquoise';
-  protoDart.strokeColor = 'darkturquoise';
-
-  return new Group([protoKite,protoDart]);
-}
+protoShapes = [kite,dart];
 
 function createPattern(protoShapes) {
   var pattern = new Group();
@@ -126,7 +113,7 @@ function arrange(protoEdges,protoShapes) {
 }
 
 var Playground = new TilePlayground(
-  createEdges,createShapes,createPattern,arrange);
+  protoEdges,protoShapes,createPattern,arrange);
 
 function onMouseDown(event) {
   Playground.onMouseDown(event);
